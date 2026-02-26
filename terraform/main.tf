@@ -86,21 +86,58 @@ module "function_app" {
   doc_intelligence_key      = module.document_intelligence.primary_access_key
   doc_intelligence_id       = module.document_intelligence.id
 
+  # Azure OpenAI configuration
+  azure_openai_endpoint        = module.ai_services.endpoint
+  azure_openai_api_key         = module.ai_services.primary_access_key
+  azure_openai_deployment_name = module.ai_services.gpt4_deployment_name
+  azure_openai_id              = module.ai_services.ai_services_id
+  azure_openai_api_version     = "2025-01-01-preview"
+
   # Container names
-  input_container_name  = module.storage.claims_container_name
-  output_container_name = module.storage.processed_container_name
+  input_container_name          = module.storage.claims_container_name
+  output_container_name         = module.storage.processed_container_name
+  model_analysis_container_name = module.storage.model_analysis_container_name
 
   tags = var.tags
 
   depends_on = [
     module.storage,
-    module.document_intelligence
+    module.document_intelligence,
+    module.ai_services
   ]
+}
+
+# Azure AI Services Module (simplified - no hub overhead)
+# Just AI Services with GPT-4 and embeddings for Function App to use
+module "ai_services" {
+  source = "./modules/ai-services"
+
+  resource_group_name = azurerm_resource_group.rg.name
+  location            = var.openai_location
+
+  # AI Services account
+  ai_services_name = "${var.unique_variable_name_suffix}-aiservices-${var.project_name}"
+
+  # Deploy GPT-4 Turbo
+  deploy_gpt4            = true
+  gpt4_deployment_name   = "04-mini"
+  gpt4_model_name        = "o4-mini"
+  gpt4_model_version     = "2025-04-16"
+  gpt4_capacity          = 10
+
+  # Deploy embeddings model
+  deploy_embedding          = true
+  embedding_deployment_name = "text-embedding-ada-002"
+  embedding_model_name      = "text-embedding-ada-002"
+  embedding_model_version   = "2"
+  embedding_capacity        = 10
+
+  tags = var.tags
 }
 
 # Role Assignment for being able to upload blobs
 resource "azurerm_role_assignment" "blob_contrib" {
-  scope = module.storage.storage_account_id
-  role_definition_name = "Storage Blob Data Contributor" 
-  principal_id         = data.azurerm_client_config.current.object_id 
+  scope                = module.storage.storage_account_id
+  role_definition_name = "Storage Blob Data Contributor"
+  principal_id         = data.azurerm_client_config.current.object_id
 }
