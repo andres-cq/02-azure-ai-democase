@@ -24,7 +24,7 @@ resource "azurerm_cognitive_deployment" "gpt4" {
   }
 
   sku {
-    name     = "Standard"
+    name     = "DataZoneStandard"
     capacity = var.gpt4_capacity
   }
 }
@@ -42,7 +42,7 @@ resource "azurerm_cognitive_deployment" "embedding" {
   }
 
   sku {
-    name     = "Standard"
+    name     = "DataZoneStandard"
     capacity = var.embedding_capacity
   }
 }
