@@ -14,7 +14,7 @@ modules/
 ├── key-vault/                  # Available but not currently used
 ├── search/                     # Available but not currently used
 ├── openai/                     # Available but not currently used
-├── ai-foundry/                 # Available but not currently used
+├── ai-services/                # ✅ ACTIVE - AI Services with GPT-4 and embeddings
 └── monitoring/                 # Available but not currently used
 ```
 
@@ -328,11 +328,6 @@ Want to add more modules? Here are common extensions:
 - Store secrets securely
 - Reference in Function App settings
 - Rotate keys automatically
-
-### Add AI Foundry (ai-foundry module)
-- Unified AI development workspace
-- Model experimentation and tracking
-- Prompt engineering and evaluation
 
 All these modules are available in this directory and can be enabled by uncommenting them in `../main.tf`.
 

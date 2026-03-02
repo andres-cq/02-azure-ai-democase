@@ -207,30 +207,6 @@ resource "azurerm_role_assignment" "subscription_uaa" {
   principal_id         = azurerm_user_assigned_identity.github_actions.principal_id
 }
 
-# Azure Kubernetes Service RBAC Cluster Admin for kubectl access
-resource "azurerm_role_assignment" "aks_cluster_admin" {
-  scope                = data.azurerm_subscription.current.id
-  role_definition_name = "Azure Kubernetes Service RBAC Cluster Admin"
-  principal_id         = azurerm_user_assigned_identity.github_actions.principal_id
-}
-
-###############################################################################
-# Non-Prod ACR (Shared by Dev and Staging across all workshops)
-###############################################################################
-
-# resource "azurerm_container_registry" "nonprod" {
-#   name                          = "${var.unique_variable_name_suffix}acrccworkshopnonprod"
-#   resource_group_name           = azurerm_resource_group.shared.name
-#   location                      = azurerm_resource_group.shared.location
-#   sku                           = "Standard"
-#   admin_enabled                 = false
-#   public_network_access_enabled = true
-
-#   tags = merge(local.common_tags, {
-#     Purpose = "Non-production container registry for dev and staging"
-#   })
-# }
-
 ###############################################################################
 # Output File
 ###############################################################################
@@ -247,11 +223,6 @@ resource "local_file" "bootstrap_output" {
         client_id    = azurerm_user_assigned_identity.github_actions.client_id
         principal_id = azurerm_user_assigned_identity.github_actions.principal_id
     }
-    # nonprod_acr = {
-    #   name         = azurerm_container_registry.nonprod.name
-    #   id           = azurerm_container_registry.nonprod.id
-    #   login_server = azurerm_container_registry.nonprod.login_server
-    # }
   })
 }
 
@@ -293,21 +264,6 @@ output "subscription_id" {
   description = "Azure Subscription ID"
   value       = data.azurerm_subscription.current.subscription_id
 }
-
-# output "nonprod_acr_name" {
-#   description = "Name of the non-prod ACR"
-#   value       = azurerm_container_registry.nonprod.name
-# }
-
-# output "nonprod_acr_id" {
-#   description = "ID of the non-prod ACR"
-#   value       = azurerm_container_registry.nonprod.id
-# }
-
-# output "nonprod_acr_login_server" {
-#   description = "Login server URL of the non-prod ACR"
-#   value       = azurerm_container_registry.nonprod.login_server
-# }
 
 output "github_actions_configuration" {
   description = "GitHub Actions configuration instructions"
