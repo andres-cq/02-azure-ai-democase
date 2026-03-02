@@ -270,7 +270,7 @@ def create_or_update_skillset(args):
                     ],
                 }
             ],
-            "parameters": {"projectionMode": "generatedKeyAsId"},
+            "parameters": {"projectionMode": "skipIndexingParentDocuments"},
         },
     }
     resp = requests.put(url, headers=rest_headers(args.search_admin_key), json=body)
