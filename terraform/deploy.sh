@@ -91,8 +91,6 @@ echo "   Storage Account:      $(terraform output -raw storage_account_name)"
 echo "   Document Intelligence: $(terraform output -raw doc_intelligence_endpoint)"
 echo "   AI Search:            $(terraform output -raw search_endpoint)"
 echo "   OpenAI:               $(terraform output -raw openai_endpoint)"
-echo "   AI Hub:               $(terraform output -raw ai_hub_name)"
-echo "   AI Project:           $(terraform output -raw ai_project_name)"
 echo ""
 
 echo "📁 Upload sample claims:"

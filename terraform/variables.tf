@@ -12,13 +12,13 @@ variable "project_name" {
 variable "location" {
   description = "Azure region for resources"
   type        = string
-  default     = "swedencentral"
+  default     = "germanywestcentral"
 }
 
 variable "openai_location" {
   description = "Azure region for OpenAI service (limited availability)"
   type        = string
-  default     = "swedencentral"
+  default     = "germanywestcentral"
 }
 
 variable "search_sku" {
@@ -41,11 +41,6 @@ variable "tags" {
     ManagedBy   = "Terraform"
     Workshop    = "Azure AI Demo"
   }
-}
-
-variable "nonprod_acr_resource_group" {
-  description = "Resource group of the non-prod ACR"
-  type        = string
 }
 
 variable "unique_variable_name_suffix" {

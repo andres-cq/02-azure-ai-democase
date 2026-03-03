@@ -1,9 +1,11 @@
 ###############################################################################
-# Unified Bootstrap Infrastructure
-# Creates shared resources for all workshops:
-# - Storage Account for Terraform state
-# - User-Assigned Managed Identities with OIDC for GitHub Actions
-# - Non-prod ACR (shared by dev and staging across all workshops)
+# Bootstrap Infrastructure — Azure AI Demo Case
+# Creates:
+# - Resource group for shared/bootstrap resources
+# - Storage account for Terraform remote state
+# - User-assigned managed identity with OIDC for GitHub Actions
+# - Federated credentials for PR (plan) and main branch (apply)
+# - Role assignments for CI/CD operations
 ###############################################################################
 
 terraform {
@@ -13,10 +15,6 @@ terraform {
     azurerm = {
       source  = "hashicorp/azurerm"
       version = "~> 4.14"
-    }
-    azuread = {
-      source  = "hashicorp/azuread"
-      version = "~> 3.0"
     }
     local = {
       source  = "hashicorp/local"
@@ -35,8 +33,6 @@ provider "azurerm" {
   subscription_id     = var.subscription_id
   storage_use_azuread = true
 }
-
-provider "azuread" {}
 
 ###############################################################################
 # Variables
@@ -72,9 +68,8 @@ variable "github_repo" {
 }
 
 variable "unique_variable_name_suffix" {
-  description = "Unique suffix for resources that need a globally unique name in Azure (i.E. your name)"
+  description = "Unique suffix for globally unique Azure resource names (e.g. your initials)"
   type        = string
-  default     = ""
 }
 
 locals {
@@ -85,7 +80,6 @@ locals {
     Project     = var.project_name
     ManagedBy   = "Terraform"
     Environment = "bootstrap"
-    Purpose     = "Shared infrastructure for all workshops"
   }
 }
 
@@ -144,17 +138,14 @@ resource "azurerm_storage_container" "tfstate" {
 }
 
 ###############################################################################
-# User-Assigned Managed Identities for GitHub Actions OIDC
-# One identity per environment, shared across all workshops
+# User-Assigned Managed Identity for GitHub Actions OIDC
 ###############################################################################
 
 resource "azurerm_user_assigned_identity" "github_actions" {
   name                = "id-${var.project_name}-github"
   resource_group_name = azurerm_resource_group.shared.name
   location            = azurerm_resource_group.shared.location
-  tags = merge(local.common_tags, {
-    Purpose     = "GitHub Actions OIDC - All workshops"
-  })
+  tags                = local.common_tags
 }
 
 ###############################################################################
@@ -163,27 +154,24 @@ resource "azurerm_user_assigned_identity" "github_actions" {
 
 # Federated credential for pull requests (plan operations)
 resource "azurerm_federated_identity_credential" "github_pr" {
-  name                = "github-pr"
-  resource_group_name = azurerm_resource_group.shared.name
-  parent_id           = azurerm_user_assigned_identity.github_actions.id
-  audience            = ["api://AzureADTokenExchange"]
-  issuer              = "https://token.actions.githubusercontent.com"
-  subject             = "repo:${var.github_org}/${var.github_repo}:pull_request"
+  name      = "github-pr"
+  parent_id = azurerm_user_assigned_identity.github_actions.id
+  audience  = ["api://AzureADTokenExchange"]
+  issuer    = "https://token.actions.githubusercontent.com"
+  subject   = "repo:${var.github_org}/${var.github_repo}:pull_request"
 }
 
-# Federated credential for GitHub Environment (apply operations)
-resource "azurerm_federated_identity_credential" "github_environment" {
-
-  name                = "github-creds"
-  resource_group_name = azurerm_resource_group.shared.name
-  parent_id           = azurerm_user_assigned_identity.github_actions.id
-  audience            = ["api://AzureADTokenExchange"]
-  issuer              = "https://token.actions.githubusercontent.com"
-  subject             = "repo:${var.github_org}/${var.github_repo}"
+# Federated credential for main branch (apply operations)
+resource "azurerm_federated_identity_credential" "github_main" {
+  name      = "github-main"
+  parent_id = azurerm_user_assigned_identity.github_actions.id
+  audience  = ["api://AzureADTokenExchange"]
+  issuer    = "https://token.actions.githubusercontent.com"
+  subject   = "repo:${var.github_org}/${var.github_repo}:ref:refs/heads/main"
 }
 
 ###############################################################################
-# Role Assignments for Managed Identities
+# Role Assignments
 ###############################################################################
 
 # Storage Blob Data Contributor on state storage account
@@ -207,30 +195,6 @@ resource "azurerm_role_assignment" "subscription_uaa" {
   principal_id         = azurerm_user_assigned_identity.github_actions.principal_id
 }
 
-# Azure Kubernetes Service RBAC Cluster Admin for kubectl access
-resource "azurerm_role_assignment" "aks_cluster_admin" {
-  scope                = data.azurerm_subscription.current.id
-  role_definition_name = "Azure Kubernetes Service RBAC Cluster Admin"
-  principal_id         = azurerm_user_assigned_identity.github_actions.principal_id
-}
-
-###############################################################################
-# Non-Prod ACR (Shared by Dev and Staging across all workshops)
-###############################################################################
-
-# resource "azurerm_container_registry" "nonprod" {
-#   name                          = "${var.unique_variable_name_suffix}acrccworkshopnonprod"
-#   resource_group_name           = azurerm_resource_group.shared.name
-#   location                      = azurerm_resource_group.shared.location
-#   sku                           = "Standard"
-#   admin_enabled                 = false
-#   public_network_access_enabled = true
-
-#   tags = merge(local.common_tags, {
-#     Purpose = "Non-production container registry for dev and staging"
-#   })
-# }
-
 ###############################################################################
 # Output File
 ###############################################################################
@@ -243,15 +207,10 @@ resource "local_file" "bootstrap_output" {
     resource_group_name  = azurerm_resource_group.shared.name
     storage_account_name = azurerm_storage_account.tfstate.name
     storage_container    = azurerm_storage_container.tfstate.name
-    managed_identities = {
-        client_id    = azurerm_user_assigned_identity.github_actions.client_id
-        principal_id = azurerm_user_assigned_identity.github_actions.principal_id
+    managed_identity = {
+      client_id    = azurerm_user_assigned_identity.github_actions.client_id
+      principal_id = azurerm_user_assigned_identity.github_actions.principal_id
     }
-    # nonprod_acr = {
-    #   name         = azurerm_container_registry.nonprod.name
-    #   id           = azurerm_container_registry.nonprod.id
-    #   login_server = azurerm_container_registry.nonprod.login_server
-    # }
   })
 }
 
@@ -260,7 +219,7 @@ resource "local_file" "bootstrap_output" {
 ###############################################################################
 
 output "resource_group_name" {
-  description = "Name of the shared resource group"
+  description = "Name of the bootstrap resource group"
   value       = azurerm_resource_group.shared.name
 }
 
@@ -274,14 +233,14 @@ output "storage_container_name" {
   value       = azurerm_storage_container.tfstate.name
 }
 
-output "managed_identity_client_ids" {
-  description = "Client IDs of the managed identities for GitHub Actions"
-  value = azurerm_user_assigned_identity.github_actions.client_id
+output "managed_identity_client_id" {
+  description = "Client ID of the managed identity for GitHub Actions"
+  value       = azurerm_user_assigned_identity.github_actions.client_id
 }
 
-output "managed_identity_principal_ids" {
-  description = "Principal IDs of the managed identities"
-  value = azurerm_user_assigned_identity.github_actions.principal_id
+output "managed_identity_principal_id" {
+  description = "Principal ID of the managed identity"
+  value       = azurerm_user_assigned_identity.github_actions.principal_id
 }
 
 output "tenant_id" {
@@ -294,21 +253,6 @@ output "subscription_id" {
   value       = data.azurerm_subscription.current.subscription_id
 }
 
-# output "nonprod_acr_name" {
-#   description = "Name of the non-prod ACR"
-#   value       = azurerm_container_registry.nonprod.name
-# }
-
-# output "nonprod_acr_id" {
-#   description = "ID of the non-prod ACR"
-#   value       = azurerm_container_registry.nonprod.id
-# }
-
-# output "nonprod_acr_login_server" {
-#   description = "Login server URL of the non-prod ACR"
-#   value       = azurerm_container_registry.nonprod.login_server
-# }
-
 output "github_actions_configuration" {
   description = "GitHub Actions configuration instructions"
   value       = <<-EOT
@@ -317,48 +261,37 @@ output "github_actions_configuration" {
     GitHub Configuration Instructions
     ============================================================
 
-    1. CREATE GITHUB ENVIRONMENTS (Settings -> Environments):
-       - dev      (no protection rules)
-       - staging  (1 required reviewer recommended)
-       - prod     (1 required reviewer recommended)
+    No GitHub Environments needed (single environment, repo-level config).
 
-    2. REPOSITORY SECRETS (Settings -> Secrets -> Actions):
-       AZURE_TENANT_ID: ${data.azurerm_client_config.current.tenant_id}
+    1. REPOSITORY SECRETS (Settings -> Secrets -> Actions):
+       AZURE_TENANT_ID:       ${data.azurerm_client_config.current.tenant_id}
        AZURE_SUBSCRIPTION_ID: ${data.azurerm_subscription.current.subscription_id}
+       AZURE_CLIENT_ID:       ${azurerm_user_assigned_identity.github_actions.client_id}
 
-    3. ENVIRONMENT SECRETS (Settings -> Environments -> <env> -> Secrets):
-
-      environment:
-         AZURE_CLIENT_ID: ${azurerm_user_assigned_identity.github_actions.client_id}
-
-    These credentials work for ALL workflows across ALL workshops:
-    - AKS-workshop-1
-    - ContainerApp-workshop-2
-    - Data-workshop-3
+    2. REPOSITORY VARIABLES (Settings -> Variables -> Actions):
+       STORAGE_ACCOUNT_NAME:  ${azurerm_storage_account.tfstate.name}
+       UNIQUE_SUFFIX:         <your unique prefix, e.g. "ft">
 
     ============================================================
   EOT
 }
 
 output "backend_config" {
-  description = "Backend configuration for workshop environments"
+  description = "Terraform backend configuration for terraform/backend.tfvars"
   value       = <<-EOT
 
     ============================================================
     Terraform Backend Configuration
     ============================================================
 
-    Use these values in each workshop's backend.tfvars:
+    Already committed in terraform/backend.tfvars.
+    Only the storage_account_name is injected at init time.
 
     resource_group_name  = "${azurerm_resource_group.shared.name}"
     storage_account_name = "${azurerm_storage_account.tfstate.name}"
     container_name       = "${azurerm_storage_container.tfstate.name}"
+    key                  = "ai-democase.tfstate"
     use_oidc             = true
-
-    State file keys by workshop/environment:
-    - AKS-workshop-1:        aks-{env}.tfstate
-    - ContainerApp-workshop-2: containerapp-{env}.tfstate
-    - Data-workshop-3:       data-{env}.tfstate
 
     ============================================================
   EOT

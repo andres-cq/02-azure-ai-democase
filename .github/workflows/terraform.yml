@@ -1,0 +1,56 @@
+###############################################################################
+# AI Demo Case - Terraform Workflow
+# Triggers: PR for plan, push to main for apply
+# Path filters: terraform/** and workflow files
+###############################################################################
+
+name: Terraform
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'terraform/**'
+      - '.github/workflows/terraform*.yml'
+
+  push:
+    branches:
+      - main
+    paths:
+      - 'terraform/**'
+      - '.github/workflows/terraform*.yml'
+
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: 'Run terraform apply'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: ai-democase-terraform-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    name: Plan
+    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && !inputs.apply)
+    uses: ./.github/workflows/terraform-reusable.yml
+    with:
+      apply: false
+    secrets: inherit
+
+  apply:
+    name: Apply
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && inputs.apply)
+    uses: ./.github/workflows/terraform-reusable.yml
+    with:
+      apply: true
+    secrets: inherit

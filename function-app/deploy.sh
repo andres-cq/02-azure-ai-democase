@@ -23,8 +23,8 @@ if ! command -v func &> /dev/null; then
 fi
 
 # Get project name from terraform (or use default)
-PREFIX="<changeme>"
-PROJECT_NAME=${1:-"frauddetect"}
+PREFIX=${1:-"<your-prefix>"}
+PROJECT_NAME=${2:-"frauddetect"}
 FUNCTION_APP_NAME="${PREFIX}-func-${PROJECT_NAME}"
 RESOURCE_GROUP="${PREFIX}-rg-${PROJECT_NAME}"
 

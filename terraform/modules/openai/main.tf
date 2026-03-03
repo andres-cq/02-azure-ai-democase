@@ -1,17 +1,18 @@
 # Azure OpenAI Module
-# Provides GPT-4 and embedding models
+# Provides chat completion and embedding models
 
 resource "azurerm_cognitive_account" "openai" {
-  name                = var.name
-  resource_group_name = var.resource_group_name
-  location            = var.location
-  kind                = "OpenAI"
-  sku_name            = var.sku_name
+  name                  = var.name
+  resource_group_name   = var.resource_group_name
+  location              = var.location
+  kind                  = "OpenAI"
+  sku_name              = var.sku_name
+  custom_subdomain_name = var.name
 
   tags = var.tags
 }
 
-# Deploy GPT-4 model
+# Deploy chat completion model
 resource "azurerm_cognitive_deployment" "gpt4" {
   count                = var.deploy_gpt4 ? 1 : 0
   name                 = var.gpt4_deployment_name
@@ -24,7 +25,7 @@ resource "azurerm_cognitive_deployment" "gpt4" {
   }
 
   sku {
-    name     = "Standard"
+    name     = "DataZoneStandard"
     capacity = var.gpt4_capacity
   }
 }
@@ -42,7 +43,7 @@ resource "azurerm_cognitive_deployment" "embedding" {
   }
 
   sku {
-    name     = "Standard"
+    name     = "DataZoneStandard"
     capacity = var.embedding_capacity
   }
 }

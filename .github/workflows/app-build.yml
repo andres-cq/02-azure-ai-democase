@@ -1,0 +1,37 @@
+###############################################################################
+# AI Demo Case - CI Build & Validation
+# Validates Python code on pull requests (does NOT deploy)
+###############################################################################
+
+name: CI Build
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'function-app/**'
+      - '.github/workflows/app-build.yml'
+
+  workflow_dispatch:
+
+jobs:
+  validate:
+    name: Validate Python
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Dependencies
+        run: pip install -r function-app/requirements.txt
+
+      - name: Syntax Check
+        run: python -m py_compile function-app/function_app.py

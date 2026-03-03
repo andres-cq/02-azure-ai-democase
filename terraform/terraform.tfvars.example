@@ -2,9 +2,8 @@
 # Copy this to terraform.tfvars and customize as needed
 
 project_name    = "frauddetect"
-environment     = "dev"
-location        = "eastus"
-openai_location = "eastus"
+location        = "germanywestcentral"
+openai_location = "germanywestcentral"
 search_sku      = "basic"
 
 tags = {

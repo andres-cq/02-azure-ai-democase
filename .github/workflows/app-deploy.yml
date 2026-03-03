@@ -1,0 +1,31 @@
+###############################################################################
+# AI Demo Case - Function App Deploy
+# Deploys on push to main or manual trigger
+###############################################################################
+
+name: App Deploy
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'function-app/**'
+      - '.github/workflows/app-deploy.yml'
+      - '.github/workflows/app-reusable.yml'
+
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: ai-democase-app-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy
+    uses: ./.github/workflows/app-reusable.yml
+    secrets: inherit
