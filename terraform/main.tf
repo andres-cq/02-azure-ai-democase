@@ -59,17 +59,6 @@ module "document_intelligence" {
   tags = var.tags
 }
 
-# AI Services Module (multi-service, required for skillset billing)
-module "ai_services" {
-  source = "./modules/ai-services"
-
-  name                = "${var.unique_variable_name_suffix}-ais-${var.project_name}"
-  resource_group_name = azurerm_resource_group.rg.name
-  location            = var.location
-
-  tags = var.tags
-}
-
 # OpenAI Module
 module "openai" {
   source = "./modules/openai"
@@ -142,10 +131,10 @@ module "function_app" {
   doc_intelligence_id       = module.document_intelligence.id
 
   # Azure OpenAI configuration
-  azure_openai_endpoint        = module.ai_services.endpoint
-  azure_openai_api_key         = module.ai_services.primary_access_key
-  azure_openai_deployment_name = module.ai_services.gpt4_deployment_name
-  azure_openai_id              = module.ai_services.ai_services_id
+  azure_openai_endpoint        = module.openai.endpoint
+  azure_openai_api_key         = module.openai.primary_access_key
+  azure_openai_deployment_name = module.openai.gpt4_deployment_name
+  azure_openai_id              = module.openai.id
   azure_openai_api_version     = "2025-01-01-preview"
 
   # Container names
@@ -173,7 +162,7 @@ module "function_app" {
   depends_on = [
     module.storage,
     module.document_intelligence,
-    module.ai_services
+    module.ai_services,
     module.openai,
     module.search
   ]
@@ -184,25 +173,9 @@ module "function_app" {
 module "ai_services" {
   source = "./modules/ai-services"
 
+  name                = "${var.unique_variable_name_suffix}-ais-${var.project_name}"
   resource_group_name = azurerm_resource_group.rg.name
-  location            = var.openai_location
-
-  # AI Services account
-  ai_services_name = "${var.unique_variable_name_suffix}-aiservices-${var.project_name}"
-
-  # Deploy GPT-4 Turbo
-  deploy_gpt4            = true
-  gpt4_deployment_name   = "o4-mini"
-  gpt4_model_name        = "o4-mini"
-  gpt4_model_version     = "2025-04-16"
-  gpt4_capacity          = 10
-
-  # Deploy embeddings model
-  deploy_embedding          = true
-  embedding_deployment_name = "text-embedding-ada-002"
-  embedding_model_name      = "text-embedding-ada-002"
-  embedding_model_version   = "2"
-  embedding_capacity        = 10
+  location            = var.location
 
   tags = var.tags
 }

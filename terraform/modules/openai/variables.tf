@@ -58,19 +58,19 @@ variable "deploy_embedding" {
 variable "embedding_deployment_name" {
   description = "Name of the embedding deployment"
   type        = string
-  default     = "text-embedding-3-small"
+  default     = "text-embedding-ada-002"
 }
 
 variable "embedding_model_name" {
   description = "Embedding model name"
   type        = string
-  default     = "text-embedding-3-small"
+  default     = "text-embedding-ada-002"
 }
 
 variable "embedding_model_version" {
   description = "Embedding model version"
   type        = string
-  default     = "1"
+  default     = "2"
 }
 
 variable "embedding_capacity" {

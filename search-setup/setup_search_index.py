@@ -66,7 +66,7 @@ def parse_args():
     parser.add_argument("--openai-endpoint", default=os.getenv("AZURE_OPENAI_ENDPOINT"))
     parser.add_argument(
         "--openai-embedding-deployment",
-        default=os.getenv("AZURE_OPENAI_EMBEDDING_DEPLOYMENT", "text-embedding-3-small"),
+        default=os.getenv("AZURE_OPENAI_EMBEDDING_DEPLOYMENT", "text-embedding-ada-002"),
     )
     parser.add_argument(
         "--ai-services-endpoint", default=os.getenv("AZURE_AI_SERVICES_ENDPOINT")

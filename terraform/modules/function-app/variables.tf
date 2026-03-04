@@ -115,6 +115,8 @@ variable "model_analysis_container_name" {
   description = "Name of the blob container for model analysis results"
   type        = string
   default     = "model-analysis-results"
+}
+
 variable "openai_endpoint" {
   description = "Azure OpenAI endpoint URL"
   type        = string

@@ -162,12 +162,13 @@ def process_insurance_claim(blob: func.InputStream):
     path="processed-data/{name}",
     connection="DataStorageConnection"
 )
-def analyze_with_gpt4(blob: func.InputStream):
+def analyze_with_gpt5(blob: func.InputStream):
     """
     Triggered when a JSON document is uploaded to the 'processed-data' container.
-    Sends the JSON to GPT-4o-mini for analysis and stores the response.
+    Sends the JSON to GPT-5-mini for analysis and stores the response.
     """
-    logging.info(f"GPT-4 Analysis - Processing blob: {blob.name}, Size: {blob.length} bytes")
+    logging.info(f"GPT-5 Analysis - Processing blob: {blob.name}, Size: {blob.length} bytes")
+    logging.info(f"Environment - Deployment: {AZURE_OPENAI_DEPLOYMENT}, Endpoint: {AZURE_OPENAI_ENDPOINT}")
 
     try:
         # Only process JSON files
@@ -188,7 +189,7 @@ def analyze_with_gpt4(blob: func.InputStream):
             azure_endpoint=AZURE_OPENAI_ENDPOINT
         )
 
-        # Construct prompt for GPT-4
+        # Construct prompt for GPT-5
         prompt = f"""You are an insurance claims analyst. Analyze the following document data and provide:
 1. A summary of the claim
 2. Any potential fraud indicators
@@ -200,8 +201,11 @@ Document Data:
 
 Provide your analysis in a structured format."""
 
-        # Call GPT-4o-mini
+        # Call GPT-5-mini
         logging.info(f"Calling Azure OpenAI deployment: {AZURE_OPENAI_DEPLOYMENT}")
+        logging.info(f"Using endpoint: {AZURE_OPENAI_ENDPOINT}")
+        logging.info(f"Using API version: {AZURE_OPENAI_API_VERSION}")
+
         response = client.chat.completions.create(
             model=AZURE_OPENAI_DEPLOYMENT,
             messages=[
@@ -215,11 +219,18 @@ Provide your analysis in a structured format."""
                 }
             ],
             temperature=1,  # Lower temperature for more consistent analysis
-            max_completion_tokens=1500
+            max_completion_tokens=6000  # Increased to accommodate reasoning model (1500 for reasoning + 4500 for response)
         )
 
         # Extract analysis from response
         gpt_analysis = response.choices[0].message.content
+
+        # Debug logging
+        logging.info(f"Response finish_reason: {response.choices[0].finish_reason}")
+        logging.info(f"Response content length: {len(gpt_analysis) if gpt_analysis else 0}")
+        if not gpt_analysis:
+            logging.warning(f"Empty response from GPT! Full response: {response}")
+            logging.warning(f"Response model dump: {response.model_dump_json()}")
 
         # Build result object
         analysis_result = {
@@ -227,7 +238,7 @@ Provide your analysis in a structured format."""
             "analysis_timestamp": response.created,
             "model_used": AZURE_OPENAI_DEPLOYMENT,
             "original_data": document_data,
-            "gpt4_analysis": gpt_analysis,
+            "gpt5_analysis": gpt_analysis,
             "token_usage": {
                 "prompt_tokens": response.usage.prompt_tokens,
                 "completion_tokens": response.usage.completion_tokens,
@@ -237,7 +248,7 @@ Provide your analysis in a structured format."""
 
         # Store results in model-analysis-results container
         blob_service_client = BlobServiceClient.from_connection_string(DATA_STORAGE_CONN)
-        output_blob_name = f"{os.path.splitext(blob.name)[0]}_gpt4_analysis.json"
+        output_blob_name = f"{os.path.splitext(blob.name)[0]}_gpt5_analysis.json"
         output_blob_client = blob_service_client.get_blob_client(
             container=MODEL_ANALYSIS_CONTAINER,
             blob=output_blob_name
@@ -249,7 +260,7 @@ Provide your analysis in a structured format."""
             overwrite=True
         )
 
-        logging.info(f"Successfully analyzed {blob.name} with GPT-4")
+        logging.info(f"Successfully analyzed {blob.name} with GPT-5")
         logging.info(f"Results saved to {output_blob_name}")
         logging.info(f"Tokens used: {response.usage.total_tokens}")
 
@@ -257,7 +268,7 @@ Provide your analysis in a structured format."""
         logging.error(f"Invalid JSON in blob {blob.name}: {str(e)}")
         raise
     except Exception as e:
-        logging.error(f"Error analyzing blob {blob.name} with GPT-4: {str(e)}")
+        logging.error(f"Error analyzing blob {blob.name} with GPT-5: {str(e)}")
         raise
 # ══════════════════════════════════════════════════════════════
 # T&C RAG Chatbot - Bot Framework /api/messages endpoint
