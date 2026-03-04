@@ -223,12 +223,12 @@ def create_or_update_skillset(args):
                 "@odata.type": "#Microsoft.Skills.Text.SplitSkill",
                 "name": "text-split",
                 "description": "Split markdown into chunks",
-                "context": "/document/markdown_document/sections/*",
+                "context": "/document/markdown_document/*",
                 "textSplitMode": "pages",
                 "maximumPageLength": 2000,
                 "pageOverlapLength": 500,
                 "inputs": [
-                    {"name": "text", "source": "/document/markdown_document/sections/*/content"}
+                    {"name": "text", "source": "/document/markdown_document/*/content"}
                 ],
                 "outputs": [
                     {"name": "textItems", "targetName": "chunks"}
@@ -238,12 +238,12 @@ def create_or_update_skillset(args):
                 "@odata.type": "#Microsoft.Skills.Text.AzureOpenAIEmbeddingSkill",
                 "name": "embedding",
                 "description": "Generate embeddings for each chunk",
-                "context": "/document/markdown_document/sections/*/chunks/*",
+                "context": "/document/markdown_document/*/chunks/*",
                 "resourceUri": args.openai_endpoint,
                 "deploymentId": args.openai_embedding_deployment,
                 "modelName": "text-embedding-ada-002",
                 "inputs": [
-                    {"name": "text", "source": "/document/markdown_document/sections/*/chunks/*"}
+                    {"name": "text", "source": "/document/markdown_document/*/chunks/*"}
                 ],
                 "outputs": [
                     {"name": "embedding", "targetName": "text_vector"}
@@ -260,10 +260,10 @@ def create_or_update_skillset(args):
                 {
                     "targetIndexName": INDEX_NAME,
                     "parentKeyFieldName": "parent_id",
-                    "sourceContext": "/document/markdown_document/sections/*/chunks/*",
+                    "sourceContext": "/document/markdown_document/*/chunks/*",
                     "mappings": [
-                        {"name": "chunk", "source": "/document/markdown_document/sections/*/chunks/*"},
-                        {"name": "text_vector", "source": "/document/markdown_document/sections/*/chunks/*/text_vector"},
+                        {"name": "chunk", "source": "/document/markdown_document/*/chunks/*"},
+                        {"name": "text_vector", "source": "/document/markdown_document/*/chunks/*/text_vector"},
                         {"name": "title", "source": "/document/metadata_storage_name"},
                         {"name": "metadata_storage_path", "source": "/document/metadata_storage_path"},
                         {"name": "metadata_storage_name", "source": "/document/metadata_storage_name"},
