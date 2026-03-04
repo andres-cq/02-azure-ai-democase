@@ -13,6 +13,9 @@ crash.*.log
 *.tfvars
 *.tfvars.json
 
+# Allow backend config to be committed
+!backend.tfvars
+
 # Ignore override files
 override.tf
 override.tf.json

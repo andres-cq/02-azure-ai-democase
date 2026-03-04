@@ -1,3 +1,8 @@
+variable "name" {
+  description = "Name of the AI Services resource"
+  type        = string
+}
+
 variable "resource_group_name" {
   description = "Name of the resource group"
   type        = string
@@ -15,7 +20,7 @@ variable "ai_services_name" {
 }
 
 variable "sku_name" {
-  description = "SKU for Azure AI Services"
+  description = "SKU for AI Services"
   type        = string
   default     = "S0"
 }

@@ -10,6 +10,7 @@ resource "azurerm_cognitive_account" "ai_services" {
   kind                = "AIServices"  # Multi-service account
   sku_name            = var.sku_name
   project_management_enabled = true
+  custom_subdomain_name = var.name
 
   identity {
     type = "SystemAssigned"

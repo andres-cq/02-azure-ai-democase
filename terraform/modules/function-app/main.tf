@@ -44,7 +44,8 @@ resource "azurerm_linux_function_app" "processor" {
   storage_account_access_key = azurerm_storage_account.function_storage.primary_access_key
 
   identity {
-    type = "SystemAssigned"
+    type         = var.bot_identity_id != "" ? "SystemAssigned, UserAssigned" : "SystemAssigned"
+    identity_ids = var.bot_identity_id != "" ? [var.bot_identity_id] : []
   }
 
   site_config {
@@ -57,8 +58,8 @@ resource "azurerm_linux_function_app" "processor" {
   }
 
   app_settings = {
-    "FUNCTIONS_WORKER_RUNTIME"       = "python"
-    "AzureWebJobsFeatureFlags"       = "EnableWorkerIndexing"
+    "FUNCTIONS_WORKER_RUNTIME"        = "python"
+    "AzureWebJobsFeatureFlags"        = "EnableWorkerIndexing"
     "PYTHON_ENABLE_WORKER_EXTENSIONS" = "1"
 
     # Data Storage Account (where claims PDFs are stored)
@@ -78,6 +79,20 @@ resource "azurerm_linux_function_app" "processor" {
     "INPUT_CONTAINER_NAME"           = var.input_container_name
     "OUTPUT_CONTAINER_NAME"          = var.output_container_name
     "MODEL_ANALYSIS_CONTAINER_NAME"  = var.model_analysis_container_name
+
+    # Azure OpenAI Configuration
+    "AZURE_OPENAI_ENDPOINT"             = var.openai_endpoint
+    "AZURE_OPENAI_CHAT_DEPLOYMENT"      = var.openai_chat_deployment
+    "AZURE_OPENAI_EMBEDDING_DEPLOYMENT" = var.openai_embedding_deployment
+
+    # Azure AI Search Configuration
+    "AZURE_SEARCH_ENDPOINT"   = var.search_endpoint
+    "AZURE_SEARCH_INDEX_NAME" = var.search_index_name
+
+    # Bot Framework Configuration
+    "MicrosoftAppId"       = var.bot_identity_client_id
+    "MicrosoftAppTenantId" = var.bot_identity_tenant_id
+    "MicrosoftAppType"     = "UserAssignedMSI"
   }
 
   tags = var.tags
@@ -98,8 +113,15 @@ resource "azurerm_role_assignment" "function_cognitive_user" {
 }
 
 # RBAC: Grant Function App access to Azure OpenAI
-resource "azurerm_role_assignment" "function_cognitive_openai_user" {
-  scope                = var.azure_openai_id
+resource "azurerm_role_assignment" "function_openai_user" {
+  scope                = var.openai_id
   role_definition_name = "Cognitive Services OpenAI User"
+  principal_id         = azurerm_linux_function_app.processor.identity[0].principal_id
+}
+
+# RBAC: Grant Function App access to Azure AI Search
+resource "azurerm_role_assignment" "function_search_reader" {
+  scope                = var.search_id
+  role_definition_name = "Search Index Data Reader"
   principal_id         = azurerm_linux_function_app.processor.identity[0].principal_id
 }

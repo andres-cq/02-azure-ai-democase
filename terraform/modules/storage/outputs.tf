@@ -34,3 +34,8 @@ output "model_analysis_container_name" {
   description = "Name of the model analysis results container"
   value       = azurerm_storage_container.model_analysis.name
 }
+
+output "terms_container_name" {
+  description = "Name of the terms and conditions container"
+  value       = azurerm_storage_container.terms_and_conditions.name
+}

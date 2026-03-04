@@ -1,11 +1,10 @@
-# AI Services outputs
-output "ai_services_id" {
-  description = "ID of the Azure AI Services account"
+output "id" {
+  description = "ID of the AI Services resource"
   value       = azurerm_cognitive_account.ai_services.id
 }
 
-output "ai_services_name" {
-  description = "Name of the Azure AI Services account"
+output "name" {
+  description = "Name of the AI Services resource"
   value       = azurerm_cognitive_account.ai_services.name
 }
 

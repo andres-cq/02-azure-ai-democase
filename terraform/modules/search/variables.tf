@@ -1,5 +1,5 @@
 variable "name" {
-  description = "Name of the Document Intelligence service"
+  description = "Name of the Azure AI Search service"
   type        = string
 }
 
@@ -13,10 +13,16 @@ variable "location" {
   type        = string
 }
 
-variable "sku_name" {
-  description = "SKU for Document Intelligence"
+variable "sku" {
+  description = "SKU for Azure AI Search"
   type        = string
-  default     = "S0"
+  default     = "basic"
+}
+
+variable "semantic_search_sku" {
+  description = "SKU for semantic search capability"
+  type        = string
+  default     = "standard"
 }
 
 variable "tags" {
