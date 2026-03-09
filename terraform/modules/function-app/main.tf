@@ -69,9 +69,16 @@ resource "azurerm_linux_function_app" "processor" {
     "DOCUMENT_INTELLIGENCE_ENDPOINT" = var.doc_intelligence_endpoint
     "DOCUMENT_INTELLIGENCE_KEY"      = var.doc_intelligence_key
 
+    # Azure OpenAI Configuration
+    "AZURE_OPENAI_ENDPOINT"        = var.openai_endpoint
+    "AZURE_OPENAI_API_KEY"         = var.openai_api_key
+    "AZURE_OPENAI_DEPLOYMENT_NAME" = var.openai_chat_deployment
+    "AZURE_OPENAI_API_VERSION"     = var.openai_api_version
+
     # Container names
-    "INPUT_CONTAINER_NAME"  = var.input_container_name
-    "OUTPUT_CONTAINER_NAME" = var.output_container_name
+    "INPUT_CONTAINER_NAME"           = var.input_container_name
+    "OUTPUT_CONTAINER_NAME"          = var.output_container_name
+    "MODEL_ANALYSIS_CONTAINER_NAME"  = var.model_analysis_container_name
 
     # Azure OpenAI Configuration
     "AZURE_OPENAI_ENDPOINT"             = var.openai_endpoint

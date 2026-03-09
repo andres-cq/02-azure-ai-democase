@@ -87,7 +87,24 @@ variable "output_container_name" {
 variable "openai_endpoint" {
   description = "Azure OpenAI endpoint URL"
   type        = string
-  default     = ""
+}
+
+variable "openai_api_key" {
+  description = "Azure OpenAI API key"
+  type        = string
+  sensitive   = true
+}
+
+variable "openai_api_version" {
+  description = "Azure OpenAI API version"
+  type        = string
+  default     = "2025-04-16"
+}
+
+variable "model_analysis_container_name" {
+  description = "Name of the blob container for model analysis results"
+  type        = string
+  default     = "model-analysis-results"
 }
 
 variable "openai_chat_deployment" {

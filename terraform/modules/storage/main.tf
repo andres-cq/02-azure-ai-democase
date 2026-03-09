@@ -34,6 +34,13 @@ resource "azurerm_storage_container" "processed" {
   container_access_type = "private"
 }
 
+# Blob Container for Model Analysis Results
+resource "azurerm_storage_container" "model_analysis" {
+  name                  = var.model_analysis_container_name
+  storage_account_id    = azurerm_storage_account.storage.id
+  container_access_type = "private"
+}
+
 # Blob Container for Terms and Conditions PDFs
 resource "azurerm_storage_container" "terms_and_conditions" {
   name                  = var.terms_container_name

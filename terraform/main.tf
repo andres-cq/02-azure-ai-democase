@@ -59,17 +59,6 @@ module "document_intelligence" {
   tags = var.tags
 }
 
-# AI Services Module (multi-service, required for skillset billing)
-module "ai_services" {
-  source = "./modules/ai-services"
-
-  name                = "${var.unique_variable_name_suffix}-ais-${var.project_name}"
-  resource_group_name = azurerm_resource_group.rg.name
-  location            = var.location
-
-  tags = var.tags
-}
-
 # OpenAI Module
 module "openai" {
   source = "./modules/openai"
@@ -141,15 +130,18 @@ module "function_app" {
   doc_intelligence_key      = module.document_intelligence.primary_access_key
   doc_intelligence_id       = module.document_intelligence.id
 
-  # Container names
-  input_container_name  = module.storage.claims_container_name
-  output_container_name = module.storage.processed_container_name
-
-  # OpenAI configuration
-  openai_endpoint             = module.openai.endpoint
-  openai_chat_deployment      = module.openai.gpt4_deployment_name
+  # Azure OpenAI configuration
+  openai_endpoint        = module.openai.endpoint
+  openai_api_key         = module.openai.primary_access_key
+  openai_api_version     = "2025-01-01-preview"
+  openai_chat_deployment = module.openai.gpt4_deployment_name
+  openai_id              = module.openai.id
   openai_embedding_deployment = module.openai.embedding_deployment_name
-  openai_id                   = module.openai.id
+
+  # Container names
+  input_container_name          = module.storage.claims_container_name
+  output_container_name         = module.storage.processed_container_name
+  model_analysis_container_name = module.storage.model_analysis_container_name
 
   # Search configuration
   search_endpoint = module.search.endpoint
@@ -165,9 +157,22 @@ module "function_app" {
   depends_on = [
     module.storage,
     module.document_intelligence,
+    module.ai_services,
     module.openai,
     module.search
   ]
+}
+
+# Azure AI Services Module (simplified - no hub overhead)
+# Just AI Services with GPT-4 and embeddings for Function App to use
+module "ai_services" {
+  source = "./modules/ai-services"
+
+  name                = "${var.unique_variable_name_suffix}-ais-${var.project_name}"
+  resource_group_name = azurerm_resource_group.rg.name
+  location            = var.location
+
+  tags = var.tags
 }
 
 # Role Assignment for being able to upload blobs
