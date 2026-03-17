@@ -44,23 +44,31 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install Dependencies
-        shell: bash
+      - name: Install Azure Functions Core Tools v4
         run: |
-          pushd './${{ inputs.working_directory }}'
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt --target=".python_packages/lib/site-packages"
-          popd
-        working-directory: ${{ github.workspace }}
+          curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.gpg
+          sudo mv microsoft.gpg /etc/apt/trusted.gpg.d/microsoft.gpg
+          sudo sh -c 'echo "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-$(lsb_release -cs)-prod $(lsb_release -cs) main" > /etc/apt/sources.list.d/dotnetdev.list'
+          sudo apt-get update
+          sudo apt-get install -y azure-functions-core-tools-4
 
       - name: Deploy Function App
-        uses: Azure/functions-action@v1
-        with:
-          app-name: ${{ vars.UNIQUE_SUFFIX }}-func-${{ vars.PROJECT_NAME || 'frauddetect' }}
-          package: ${{ inputs.working_directory }}
-          scm-do-build-during-deployment: true
-          enable-oryx-build: true
-          respect-funcignore: true
+        run: |
+          FUNCTION_APP_NAME="${{ vars.UNIQUE_SUFFIX }}-func-${{ vars.PROJECT_NAME || 'frauddetect' }}"
+          echo "Deploying to: ${FUNCTION_APP_NAME}"
+          for attempt in 1 2 3; do
+            echo "Deployment attempt ${attempt}..."
+            if func azure functionapp publish "${FUNCTION_APP_NAME}" --build remote; then
+              echo "Deployment succeeded on attempt ${attempt}"
+              exit 0
+            fi
+            if [ "$attempt" -lt 3 ]; then
+              echo "Deployment failed, retrying in 30s..."
+              sleep 30
+            fi
+          done
+          echo "Deployment failed after 3 attempts"
+          exit 1
 
       - name: Print Function App URL
         run: |
