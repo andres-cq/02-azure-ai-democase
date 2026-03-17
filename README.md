@@ -31,7 +31,9 @@ Furthermore, we will add a chatbot, which:
 
 The bootstrap Terraform automatically creates GitHub Actions variables for Azure OIDC authentication. To enable this, you need a GitHub Personal Access Token (PAT).
 
-1. Create a PAT at https://github.com/settings/tokens with the `repo` scope
+1. Create a PAT at https://github.com/settings/personal-access-tokens with the following repository permissions
+   -  `Read access to metadata`
+   -  `Read and Write access to actions variables`
 2. Provide the token to Terraform via one of these methods:
    - Set the environment variable: `export GITHUB_TOKEN=<your-token>`
    - Or pass it directly: `terraform apply -var="github_token=<your-token>"`
