@@ -283,7 +283,6 @@ Navigate to your Storage Account in the Azure Portal > **Containers** > `insuran
 
 Open the Bot Service in the Azure Portal > **Test in Web Chat** and ask a question about terms and conditions (e.g. "What is the deductible for collision damage?").
 
-![](images/testing_web_chat_1.png)
 ![](images/testing_web_chat_2.png)
 ![](images/testing_web_chat_3.png)
 ![](images/testing_web_chat_4.png)
