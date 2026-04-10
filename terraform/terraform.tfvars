@@ -5,7 +5,7 @@ project_name    = "frauddetect"
 location        = "germanywestcentral"
 openai_location = "germanywestcentral"
 search_sku      = "basic"
-unique_variable_name_suffix = "ac123"
+unique_variable_name_suffix = "ac"
 
 tags = {
   Project     = "Insurance Fraud Detection"
